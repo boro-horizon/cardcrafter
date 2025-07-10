@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
+// Load from set
+const url = /api/scryfall?type=set&query=${selectedSet}
+
+// Load from search
+const url = /api/scryfall?type=search&query=${searchTerm}
+
+// Handle pagination from Scryfall next_page URLs
+const url = /api/scryfall?url=${encodeURIComponent(nextPage)}
+
 type Card = {
   id: string
   name: string
