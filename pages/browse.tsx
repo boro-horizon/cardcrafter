@@ -41,11 +41,11 @@ const BrowsePage = () => {
     let apiUrl = ''
 
     if (type === 'set') {
-      apiUrl = "/api/scryfall?type=set&query=${query}"
+      apiUrl = /api/scryfall?type=set&query=${query}
     } else if (type === 'search') {
-      apiUrl = "/api/scryfall?type=search&query=${encodeURIComponent(query)}"
+      apiUrl = /api/scryfall?type=search&query=${encodeURIComponent(query)}
     } else if (type === 'page') {
-      apiUrl = "/api/scryfall?url=${encodeURIComponent(query)}"
+      apiUrl = /api/scryfall?url=${encodeURIComponent(query)}
     }
 
     const res = await fetch(apiUrl)
