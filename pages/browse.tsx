@@ -1,230 +1,141 @@
+// pages/browse.tsx
+
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
-
-// Load from set
-const url = /api/scryfall?type=set&query=${selectedSet}
-
-// Load from search
-const url = /api/scryfall?type=search&query=${searchTerm}
-
-// Handle pagination from Scryfall next_page URLs
-const url = /api/scryfall?url=${encodeURIComponent(nextPage)}
 
 type Card = {
   id: string
   name: string
-  set: string
-  collector_number: string
-  prices?: {
-    usd: string | null
+  image_uris?: {
+    small: string
   }
+  prices?: {
+    usd: string
+    usd_foil: string
+  }
+  set_name: string
+  collector_number: string
 }
 
-export default function Browse() {
-  const [sets, setSets] = useState<any[]>([])
+const BrowsePage = () => {
+  const [sets, setSets] = useState<{ code: string; name: string }[]>([])
   const [selectedSet, setSelectedSet] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<Card[]>([])
-  const [nextPage, setNextPage] = useState<string | null>(null)
-  const [prevPages, setPrevPages] = useState<string[]>([])
-  const [quantities, setQuantities] = useState<Record<string, number>>({})
+  const [searchTerm, setSearchTerm] = useState('')
+  const [nextPageUrl, setNextPageUrl] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('list')
 
   useEffect(() => {
-    fetch('https://api.scryfall.com/sets')
-      .then(res => res.json())
-      .then(data => {
-        const mtgSets = data.data.filter((set: any) => set.set_type !== 'funny')
-        setSets(mtgSets)
-      })
+    // Load MTG set list from Scryfall
+    const loadSets = async () => {
+      const res = await fetch('https://api.scryfall.com/sets')
+      const data = await res.json()
+      const filtered = data.data
+        .filter((s: any) => s.set_type === 'expansion' || s.set_type === 'core')
+        .map((s: any) => ({ code: s.code, name: s.name }))
+      setSets(filtered)
+    }
+    loadSets()
   }, [])
 
-  useEffect(() => {
-    if (selectedSet) {
-      const url = "https://api.scryfall.com/cards/search?q=set:${selectedSet}&order=collector_number"
-      loadCards(url, true)
+  const fetchCards = async (type: 'set' | 'search' | 'page', query: string) => {
+    let apiUrl = ''
+
+    if (type === 'set') {
+      apiUrl = "/api/scryfall?type=set&query=${query}"
+    } else if (type === 'search') {
+      apiUrl = "/api/scryfall?type=search&query=${encodeURIComponent(query)}"
+    } else if (type === 'page') {
+      apiUrl = "/api/scryfall?url=${encodeURIComponent(query)}"
     }
-  }, [selectedSet])
 
-  const loadCards = async (url: string, reset = false) => {
-    try {
-      const res = await fetch(url)
-      const data = await res.json()
+    const res = await fetch(apiUrl)
+    const data = await res.json()
 
-      setCards(data?.data ?? [])
-      setNextPage(data.next_page ?? null)
+    setCards(data.data)
+    setNextPageUrl(data.next_page || null)
+  }
 
-      if (reset) {
-        setPrevPages([])
-      } else if (data?.data?.length > 0) {
-        setPrevPages(prev => [...prev, url])
-      }
-    } catch (err) {
-      console.error('Error loading cards:', err)
-    }
+  const handleSetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const setCode = e.target.value
+    setSelectedSet(setCode)
+    fetchCards('set', setCode)
   }
 
   const handleSearch = () => {
-    if (!searchTerm.trim()) return
-    const query = encodeURIComponent(searchTerm)
-    const url = "https://api.scryfall.com/cards/search?q=${query}"
-    loadCards(url, true)
-    setSelectedSet('')
-  }
-
-  const goToNext = () => {
-    if (nextPage) loadCards(nextPage)
-  }
-
-  const goToPrev = () => {
-    if (prevPages.length > 1) {
-      const pages = [...prevPages]
-      pages.pop()
-      const prevUrl = pages.pop()!
-      setPrevPages(pages)
-      loadCards(prevUrl)
+    if (searchTerm.trim().length > 0) {
+      fetchCards('search', searchTerm)
     }
   }
 
-  const addToCollection = async (card: Card) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return alert('Please sign in.')
-
-    const quantity = quantities[card.id] ?? 1
-
-    const { data: existing } = await supabase
-      .from('collections')
-      .select('id, quantity')
-      .eq('user_id', user.id)
-      .eq('card_name', card.name)
-      .eq('set', card.set)
-      .eq('collector_number', card.collector_number)
-      .maybeSingle()
-
-    if (existing) {
-      await supabase
-        .from('collections')
-        .update({ quantity: existing.quantity + quantity })
-        .eq('id', existing.id)
-    } else {
-      await supabase.from('collections').insert({
-        user_id: user.id,
-        card_name: card.name,
-        set: card.set,
-        collector_number: card.collector_number,
-        quantity,
-      })
+  const handleNextPage = () => {
+    if (nextPageUrl) {
+      fetchCards('page', nextPageUrl)
     }
-
-    alert("Added ${quantity}x ${card.name} to your collection.")
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Browse Magic Cards</h1>
+    <div className="p-4 max-w-5xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Browse MTG Cards</h1>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-wrap gap-4 items-center mb-6">
         <select
+          className="border rounded px-3 py-2"
+          onChange={handleSetSelect}
           value={selectedSet}
-          onChange={(e) => {
-            setSelectedSet(e.target.value)
-            setSearchTerm('')
-          }}
-          className="border p-2 rounded w-full md:w-1/2"
         >
-          <option value="">-- Select MTG Set --</option>
-          {sets.map(set => (
+          <option value="">Select a set</option>
+          {sets.map((set) => (
             <option key={set.code} value={set.code}>
-              {set.name} ({set.code.toUpperCase()})
+              {set.name}
             </option>
           ))}
         </select>
 
-        <div className="flex flex-row gap-2 w-full md:w-1/2">
-          <input
-            type="text"
-            placeholder="Search any card name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="border p-2 rounded flex-grow"
-          />
-          <button
-            onClick={handleSearch}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Search
-          </button>
-        </div>
+        <input
+          type="text"
+          placeholder="Search any card..."
+          className="border rounded px-3 py-2"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button onClick={handleSearch} className="bg-blue-500 text-white px-4 py-2 rounded">
+          Search
+        </button>
+
+        <button
+          onClick={() => setViewMode(viewMode === 'list' ? 'card' : 'list')}
+          className="ml-auto px-4 py-2 bg-gray-200 rounded"
+        >
+          {viewMode === 'list' ? 'Card View' : 'List View'}
+        </button>
       </div>
 
-      {cards.length > 0 ? (
-        <>
-          <table className="w-full text-sm border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-2 text-left">Name</th>
-                <th>Set</th>
-                <th>#</th>
-                <th>Price (CAD)</th>
-                <th>Qty</th>
-                <th>Add</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cards.map((card) => {
-                const usd = card.prices?.usd ? parseFloat(card.prices.usd) : null
-                const cad = usd ? (usd * 1.35).toFixed(2) : 'N/A'
+      {cards.length > 0 && (
+        <div className={viewMode === 'card' ? 'grid grid-cols-2 sm:grid-cols-4 gap-4' : ''}>
+          {cards.map((card) => (
+            <div key={card.id} className="mb-4 border p-2 rounded bg-white shadow-sm">
+              {viewMode === 'card' && card.image_uris?.small ? (
+                <img src={card.image_uris.small} alt={card.name} className="w-full mb-2" />
+              ) : null}
+              <div className="text-sm font-medium">{card.name}</div>
+              <div className="text-xs text-gray-600">{card.set_name} #{card.collector_number}</div>
+              <div className="text-sm font-bold text-green-700">
+                ${card.prices?.usd ?? 'N/A'} USD
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-                return (
-                  <tr key={card.id} className="border-t">
-                    <td className="p-2">{card.name}</td>
-                    <td className="text-center">{card.set.toUpperCase()}</td>
-                    <td className="text-center">{card.collector_number}</td>
-                    <td className="text-center">${cad}</td>
-                    <td className="text-center">
-                      <input
-                        type="number"
-                        min={1}
-                        value={quantities[card.id] ?? 1}
-                        onChange={(e) =>
-                          setQuantities({ ...quantities, [card.id]: parseInt(e.target.value) })
-                        }
-                        className="w-16 border rounded px-1"
-                      />
-                    </td>
-                    <td className="text-center">
-                      <button
-                        onClick={() => addToCollection(card)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
-                      >
-                        Add
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-
-          <div className="flex justify-between mt-6">
-            <button
-              onClick={goToPrev}
-              disabled={prevPages.length <= 1}
-              className="bg-gray-300 px-4 py-2 rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={goToNext}
-              disabled={!nextPage}
-              className="bg-gray-300 px-4 py-2 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </>
-      ) : (
-        <p className="text-gray-500">No cards found. Select a set or enter a search above.</p>
+      {nextPageUrl && (
+        <div className="mt-6">
+          <button onClick={handleNextPage} className="bg-gray-800 text-white px-4 py-2 rounded">
+            Load More
+          </button>
+        </div>
       )}
     </div>
   )
 }
+
+export default BrowsePage
