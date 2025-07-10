@@ -1,4 +1,3 @@
-// pages/browse.tsx
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Image from 'next/image'
@@ -31,10 +30,10 @@ export default function Browse() {
 
   useEffect(() => {
     if (selectedSet) {
-      fetch('https://api.scryfall.com/cards/search?q=set:${selectedSet}')
+      fetch(https://api.scryfall.com/cards/search?q=set:${selectedSet})
         .then(res => res.json())
         .then(data => {
-          setCards(data.data)
+          setCards(data?.data ?? [])
         })
     }
   }, [selectedSet])
@@ -43,7 +42,7 @@ export default function Browse() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return alert('You must be signed in.')
 
-    const quantity = quantities[card.id] || 1
+    const quantity = quantities[card.id] ?? 1
 
     const { data: existing } = await supabase
       .from('collections')
@@ -69,7 +68,7 @@ export default function Browse() {
       })
     }
 
-    alert('Added ${quantity} x ${card.name} to your collection.')
+    alert(Added ${quantity} x ${card.name} to your collection.)
   }
 
   return (
@@ -102,13 +101,17 @@ export default function Browse() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {cards.map((card) => (
             <div key={card.id} className="border p-2 rounded">
-              {card.image_uris?.small && (
+              {card.image_uris?.small ? (
                 <Image
                   src={card.image_uris.small}
                   alt={card.name}
                   width={146}
                   height={204}
                 />
+              ) : (
+                <div className="w-[146px] h-[204px] bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                  No image
+                </div>
               )}
               <div className="mt-1">
                 <strong className="text-sm">{card.name}</strong>
@@ -116,7 +119,7 @@ export default function Browse() {
                   <input
                     type="number"
                     min={1}
-                    value={quantities[card.id] || 1}
+                    value={quantities[card.id] ?? 1}
                     onChange={(e) =>
                       setQuantities({ ...quantities, [card.id]: parseInt(e.target.value) })
                     }
@@ -154,7 +157,7 @@ export default function Browse() {
                   <input
                     type="number"
                     min={1}
-                    value={quantities[card.id] || 1}
+                    value={quantities[card.id] ?? 1}
                     onChange={(e) =>
                       setQuantities({ ...quantities, [card.id]: parseInt(e.target.value) })
                     }
