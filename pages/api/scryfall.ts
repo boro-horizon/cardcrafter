@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   const { type, query, url } = req.query
 
   // Declare resolvedScryfallUrl only once here
-  let resolvedScryfallUrl = ''
+  resolvedScryfallUrl = ''
 
   if (typeof url === 'string' && url.length > 0) {
     resolvedScryfallUrl = decodeURIComponent(url)
