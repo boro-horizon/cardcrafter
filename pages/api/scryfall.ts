@@ -12,9 +12,9 @@ export default async function handler(req, res) {
   if (typeof url === 'string' && url.length > 0) {
     resolvedScryfallUrl = decodeURIComponent(url)
   } else if (type === 'set' && typeof query === 'string') {
-    resolvedScryfallUrl = "https://api.scryfall.com/cards/search?q=set:${query}&order=collector_number"
+    resolvedScryfallUrl = https://api.scryfall.com/cards/search?q=set:${query}&order=collector_number
   } else if (type === 'search' && typeof query === 'string') {
-    resolvedScryfallUrl = "https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)"}
+    resolvedScryfallUrl = https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}
   } else {
     return res.status(400).json({ error: 'Invalid request parameters' })
   }
