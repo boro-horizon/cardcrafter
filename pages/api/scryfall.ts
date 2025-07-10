@@ -6,24 +6,22 @@ const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
 export default async function handler(req, res) {
   const { type, query, url } = req.query
 
-  let scrysfallUrl = ''
+  // Declare scryfallUrl only once here
+  let scryfallUrl = ''
 
-  if (url) {
-    // decode URL for pagination
-    scrysfallUrl = decodeURIComponent(url as string)
-  } else if (type === 'set') {
-    scrysfallUrl = https://api.scryfall.com/cards/search?q=set:${query}&order=collector_number
-  } else if (type === 'search') {
-    scrysfallUrl = https://api.scryfall.com/cards/search?q=${encodeURIComponent(query as string)}
+  if (typeof url === 'string' && url.length > 0) {
+    scryfallUrl = decodeURIComponent(url)
+  } else if (type === 'set' && typeof query === 'string') {
+    scryfallUrl = https://api.scryfall.com/cards/search?q=set:${query}&order=collector_number
+  } else if (type === 'search' && typeof query === 'string') {
+    scryfallUrl = https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}
   } else {
-    return res.status(400).json({ error: 'Invalid request type' })
+    return res.status(400).json({ error: 'Invalid request parameters' })
   }
 
-  // Caching key
-  const cacheKey = scryfall:${scrysfallUrl}
+  const cacheKey = scryfall:${scryfallUrl}
   const now = Date.now()
 
-  // Check cache
   if (cache.has(cacheKey)) {
     const { timestamp, data } = cache.get(cacheKey)!
     if (now - timestamp < CACHE_DURATION) {
@@ -32,10 +30,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(scrysfallUrl, {
+    const response = await fetch(scryfallUrl, {
       headers: {
         'User-Agent': 'CardCrafterApp/1.0 (contact: your-email@example.com)',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     })
 
@@ -47,8 +45,8 @@ export default async function handler(req, res) {
     cache.set(cacheKey, { timestamp: now, data })
 
     return res.status(200).json(data)
-  } catch (err) {
-    console.error('Scryfall fetch error:', err)
-    return res.status(500).json({ error: 'Server error fetching data from Scryfall' })
+  } catch (error) {
+    console.error('Fetch error:', error)
+    return res.status(500).json({ error: 'Internal server error' })
   }
 }
