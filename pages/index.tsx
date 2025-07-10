@@ -1,16 +1,24 @@
-import Head from 'next/head'
-import CardSearch from '../components/CardSearch'
+// pages/index.tsx
+import Link from 'next/link'
 
 export default function Home() {
   return (
-    <>
-      <Head>
-        <title>CardCrafter Lite</title>
-      </Head>
-      <main className="p-6">
-        <h1 className="text-3xl font-bold mb-4">CardCrafter Lite</h1>
-        <CardSearch />
-      </main>
-    </>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center p-6 max-w-xl">
+        <h1 className="text-4xl font-bold mb-4 text-blue-700">CardCrafter</h1>
+        <p className="text-gray-700 mb-6 text-lg">
+          Track your Magic: The Gathering collection, check market prices, and manage your cards
+          with ease.
+        </p>
+        <div className="flex justify-center gap-4">
+          <Link href="/signup" className="bg-blue-600 text-white px-5 py-3 rounded shadow">
+            Get Started
+          </Link>
+          <Link href="/collection" className="bg-gray-200 text-gray-800 px-5 py-3 rounded">
+            View Collection
+          </Link>
+        </div>
+      </div>
+    </div>
   )
 }
