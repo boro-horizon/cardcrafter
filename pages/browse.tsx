@@ -31,7 +31,7 @@ export default function Browse() {
 
   useEffect(() => {
     if (selectedSet) {
-      fetch(https://api.scryfall.com/cards/search?q=set:${selectedSet})
+      fetch('https://api.scryfall.com/cards/search?q=set:${selectedSet}')
         .then(res => res.json())
         .then(data => {
           setCards(data.data)
