@@ -30,7 +30,7 @@ export default function Browse() {
 
   useEffect(() => {
     if (selectedSet) {
-      const url = https://api.scryfall.com/cards/search?q=set:${selectedSet}&order=collector_number
+      const url = "https://api.scryfall.com/cards/search?q=set:${selectedSet}&order=collector_number"
       loadCards(url, true)
     }
   }, [selectedSet])
