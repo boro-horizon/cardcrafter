@@ -6,20 +6,20 @@ const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
 export default async function handler(req, res) {
   const { type, query, url } = req.query
 
-  // Declare scryfallUrl only once here
-  let scryfallUrl = ''
+  // Declare resolvedScryfallUrl only once here
+  let resolvedScryfallUrl = ''
 
   if (typeof url === 'string' && url.length > 0) {
-    scryfallUrl = decodeURIComponent(url)
+    resolvedScryfallUrl = decodeURIComponent(url)
   } else if (type === 'set' && typeof query === 'string') {
-    scryfallUrl = https://api.scryfall.com/cards/search?q=set:${query}&order=collector_number
+    resolvedScryfallUrl = https://api.scryfall.com/cards/search?q=set:${query}&order=collector_number
   } else if (type === 'search' && typeof query === 'string') {
-    scryfallUrl = https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}
+    resolvedScryfallUrl = https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}
   } else {
     return res.status(400).json({ error: 'Invalid request parameters' })
   }
 
-  const cacheKey = scryfall:${scryfallUrl}
+  const cacheKey = scryfall:${resolvedScryfallUrl}
   const now = Date.now()
 
   if (cache.has(cacheKey)) {
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(scryfallUrl, {
+    const response = await fetch(resolvedScryfallUrl, {
       headers: {
         'User-Agent': 'CardCrafterApp/1.0 (contact: your-email@example.com)',
         Accept: 'application/json',
