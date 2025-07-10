@@ -20,6 +20,7 @@ export default function Navbar() {
     <nav className="flex justify-between items-center bg-gray-800 text-white px-4 py-3">
       <div className="flex gap-4">
         <Link href="/">Home</Link>
+	<Link href="/browse">Browse</Link>
         <Link href="/collection">Collection</Link>
       </div>
       <div className="flex gap-3 items-center">
