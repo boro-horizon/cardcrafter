@@ -69,7 +69,7 @@ export default function Browse() {
       })
     }
 
-    alert(Added ${quantity} x ${card.name} to your collection.)
+    alert('Added ${quantity} x ${card.name} to your collection.')
   }
 
   return (
