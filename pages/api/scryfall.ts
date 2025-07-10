@@ -6,21 +6,21 @@ const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
 export default async function handler(req, res) {
   const { type, query, url } = req.query
 
-  let scryfallUrl = ''
+  let scrysfallUrl = ''
 
   if (url) {
     // decode URL for pagination
-    scryfallUrl = decodeURIComponent(url as string)
+    scrysfallUrl = decodeURIComponent(url as string)
   } else if (type === 'set') {
-    scryfallUrl = https://api.scryfall.com/cards/search?q=set:${query}&order=collector_number
+    scrysfallUrl = https://api.scryfall.com/cards/search?q=set:${query}&order=collector_number
   } else if (type === 'search') {
-    scryfallUrl = https://api.scryfall.com/cards/search?q=${encodeURIComponent(query as string)}
+    scrysfallUrl = https://api.scryfall.com/cards/search?q=${encodeURIComponent(query as string)}
   } else {
     return res.status(400).json({ error: 'Invalid request type' })
   }
 
   // Caching key
-  const cacheKey = scryfall:${scryfallUrl}
+  const cacheKey = scryfall:${scrysfallUrl}
   const now = Date.now()
 
   // Check cache
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(scryfallUrl, {
+    const response = await fetch(scrysfallUrl, {
       headers: {
         'User-Agent': 'CardCrafterApp/1.0 (contact: your-email@example.com)',
         'Accept': 'application/json',
