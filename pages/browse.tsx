@@ -14,6 +14,7 @@ type Card = {
 export default function Browse() {
   const [sets, setSets] = useState<any[]>([])
   const [selectedSet, setSelectedSet] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
   const [cards, setCards] = useState<Card[]>([])
   const [nextPage, setNextPage] = useState<string | null>(null)
   const [prevPages, setPrevPages] = useState<string[]>([])
@@ -36,17 +37,29 @@ export default function Browse() {
   }, [selectedSet])
 
   const loadCards = async (url: string, reset = false) => {
-    const res = await fetch(url)
-    const data = await res.json()
+    try {
+      const res = await fetch(url)
+      const data = await res.json()
 
-    setCards(data?.data ?? [])
-    setNextPage(data.next_page ?? null)
+      setCards(data?.data ?? [])
+      setNextPage(data.next_page ?? null)
 
-    if (reset) {
-      setPrevPages([])
-    } else if (data?.data?.length > 0) {
-      setPrevPages(prev => [...prev, url])
+      if (reset) {
+        setPrevPages([])
+      } else if (data?.data?.length > 0) {
+        setPrevPages(prev => [...prev, url])
+      }
+    } catch (err) {
+      console.error('Error loading cards:', err)
     }
+  }
+
+  const handleSearch = () => {
+    if (!searchTerm.trim()) return
+    const query = encodeURIComponent(searchTerm)
+    const url = "https://api.scryfall.com/cards/search?q=${query}"
+    loadCards(url, true)
+    setSelectedSet('')
   }
 
   const goToNext = () => {
@@ -56,7 +69,7 @@ export default function Browse() {
   const goToPrev = () => {
     if (prevPages.length > 1) {
       const pages = [...prevPages]
-      pages.pop() // current
+      pages.pop()
       const prevUrl = pages.pop()!
       setPrevPages(pages)
       loadCards(prevUrl)
@@ -98,26 +111,40 @@ export default function Browse() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Browse MTG Sets</h1>
+      <h1 className="text-2xl font-bold mb-4">Browse Cards</h1>
 
-      <div className="mb-6">
-        <label htmlFor="set-select" className="block mb-1 text-sm font-medium">Select Set:</label>
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
         <select
-          id="set-select"
           value={selectedSet}
           onChange={(e) => setSelectedSet(e.target.value)}
-          className="border p-2 rounded w-full max-w-md"
+          className="border p-2 rounded w-full md:w-1/2"
         >
-          <option value="">-- Choose a Set --</option>
-          {sets.map((set) => (
+          <option value="">-- Select MTG Set --</option>
+          {sets.map(set => (
             <option key={set.code} value={set.code}>
               {set.name} ({set.code.toUpperCase()})
             </option>
           ))}
         </select>
+
+        <div className="flex flex-row gap-2 w-full md:w-1/2">
+          <input
+            type="text"
+            placeholder="Search any card name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="border p-2 rounded flex-grow"
+          />
+          <button
+            onClick={handleSearch}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Search
+          </button>
+        </div>
       </div>
 
-      {cards.length > 0 && (
+      {cards.length > 0 ? (
         <>
           <table className="w-full text-sm border">
             <thead>
@@ -183,6 +210,8 @@ export default function Browse() {
             </button>
           </div>
         </>
+      ) : (
+        <p className="text-gray-500">No cards found. Select a set or enter a search above.</p>
       )}
     </div>
   )
