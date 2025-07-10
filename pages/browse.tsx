@@ -111,12 +111,15 @@ export default function Browse() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Browse Cards</h1>
+      <h1 className="text-2xl font-bold mb-4">Browse Magic Cards</h1>
 
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <select
           value={selectedSet}
-          onChange={(e) => setSelectedSet(e.target.value)}
+          onChange={(e) => {
+            setSelectedSet(e.target.value)
+            setSearchTerm('')
+          }}
           className="border p-2 rounded w-full md:w-1/2"
         >
           <option value="">-- Select MTG Set --</option>
