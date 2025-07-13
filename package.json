@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.4",
+    "file-saver": "^2.0.5",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest"
